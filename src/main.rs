@@ -14,14 +14,26 @@ fn main() {
     let d = OtherStruct::new();
     let e = d.object();
 
-    vec.push(e);
+    // vec.push(e);
     // error here, "opaque type" problem
+    // since we use a vec in this case, we should have the vec hold boxed data of our structure, dynamic dispatching
+
+    let mut vec: Vec<Box<dyn SomeObject>> = Vec::new();
+
+    let a = SomeStruct::new().object();
+    let b = OtherStruct::new().object();
+
+    vec.push(a);
+    // vec.push(Box::new(a));
+    // vec.push(Box::new(b));
 }
 
 pub trait SomeTrait {
     // trait which requires "new" to be implemented,
     // "new" takes nothing and returns a new instance for the implemented structure.
-    fn new() -> Self;
+    fn new() -> Self
+    where
+        Self: Sized;
 }
 
 pub trait SomeObject: SomeTrait {
