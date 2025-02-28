@@ -1,37 +1,36 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
 #![allow(clippy::vec_init_then_push)]
 
 fn main() {
     let a = SomeStruct::new();
+    let b = OtherStruct::new();
 
-    let b = a.object();
+    a.some_function();
+    b.some_function();
 
-    some_object(b);
+    some_object_function(a);
 
-    let c = SomeStruct::new().object();
+    let c = SomeStruct::new();
+
+    let b = b.object();
+    let c = c.object();
+
     let mut vec = Vec::new();
+
+    vec.push(b);
     vec.push(c);
 
-    let d = OtherStruct::new();
-    let e = d.object();
-
-    // vec.push(e);
-    // error here, "opaque type" problem
-    // since we use a vec in this case, we should have the vec hold boxed data of our structure, dynamic dispatching
-
-    let mut vec: Vec<Box<dyn SomeObject>> = Vec::new();
-
-    let a = SomeStruct::new().object();
-    let b = OtherStruct::new().object();
-
-    vec.push(a);
-    // vec.push(Box::new(a));
-    // vec.push(Box::new(b));
+    for val in &vec {
+        val.some_function();
+    }
 }
 
 pub trait SomeTrait {
     // trait which requires "new" to be implemented,
     // "new" takes nothing and returns a new instance for the implemented structure.
     fn new() -> Self
+    // "SomeTrait" allows to for object traits to be created by adding the "Self: Size" boundary
     where
         Self: Sized;
 }
@@ -41,7 +40,8 @@ pub trait SomeObject: SomeTrait {
     // object traits can be used the same as structs.
     // object trait methods must all take "self" as an argument to remain as object trait.
     // reminder: "self" is the structure we implement upon, so the "object" function transforms to become the object trait.
-    fn object(self) -> impl SomeObject;
+    fn object(self) -> Box<dyn SomeObject>;
+    fn some_function(&self) {}
 }
 
 pub struct SomeStruct;
@@ -49,8 +49,11 @@ pub struct SomeStruct;
 
 impl SomeObject for SomeStruct {
     // implementation of "SomeObject" for "SomeStruct"
-    fn object(self) -> impl SomeObject {
-        SomeStruct
+    fn object(self) -> Box<dyn SomeObject> {
+        Box::new(SomeStruct)
+    }
+    fn some_function(&self) {
+        println!("Some Struct")
     }
 }
 
@@ -61,7 +64,7 @@ impl SomeTrait for SomeStruct {
     }
 }
 
-pub fn some_object(object: impl SomeObject) {
+pub fn some_object_function(object: impl SomeObject) {
     // function which takes the object trait "SomeObject" (static dispatched)
     drop(object); // _ = object;
 }
@@ -69,8 +72,11 @@ pub fn some_object(object: impl SomeObject) {
 pub struct OtherStruct;
 
 impl SomeObject for OtherStruct {
-    fn object(self) -> impl SomeObject {
-        OtherStruct
+    fn object(self) -> Box<dyn SomeObject> {
+        Box::new(OtherStruct)
+    }
+    fn some_function(&self) {
+        println!("Other Object");
     }
 }
 
